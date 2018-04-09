@@ -354,6 +354,19 @@ class FormSpec extends Specification {
     (form.errorsAsJson \ "foo")(0).asOpt[String] must beSome("This is a custom error")
   }
 
+  "show error message correctly when using parametrized form" in {
+    val messagesApi: MessagesApi = {
+      val config = Configuration.reference
+      val langs = new DefaultLangsProvider(config).get
+      new DefaultMessagesApiProvider(Environment.simple(), config, langs, HttpConfiguration()).get
+    }
+    implicit val messages = messagesApi.preferred(Seq.empty)
+
+    val form = Form(single("age" -> Forms.number(min = -2)))
+    val result = form.fillAndValidate(-3)
+    result.errors("age").find(_.messages == Seq("error.min")).map(_.format) must beSome("Must be greater or equal to -2")
+  }
+
   "render form using java.time.LocalDate" in {
     import java.time.LocalDate
     val dateForm = Form("date" -> localDate)
